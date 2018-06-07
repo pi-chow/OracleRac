@@ -114,14 +114,15 @@ Swap大小：
 # hostname
 ```
 
-![image](https://github.com/zouzouPi/oracle-/blob/master/oracle_picture/网络配置/修改主机名1.png)
-
 - 更改主机名
 
 ```
 # vi /etc/sysconfig/network
 
 ```
+
+![image](https://github.com/zouzouPi/oracle-/blob/master/oracle_picture/网络配置/修改主机名1.png)
+
 - 更改/etc下的hosts文件
 
 ```
