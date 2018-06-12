@@ -837,7 +837,15 @@ NODELIST`cetiti111,cetiti113
 ```
 ## 3.配置数据库实例共享
 
-- 创建文件夹 ``cetiti111、cetiti113``
+- 需要挂载的磁盘
+
+```
+/opt/oracle/oradata
+/opt/oracle/flash_recovery_area
+/opt/oracle/product/11.2.0/db_1/dbs
+```
+
+- 创建文件夹 `cetiti111、cetiti113`
 
 ```
 # su – root
@@ -848,17 +856,49 @@ NODELIST`cetiti111,cetiti113
 # chmod -R g+w /opt/oracle/  #添加读写权限
 
 ```
-- 将cetiti113的实例挂载到cetiti111中
-
-> 具体方法参考NFS配置
+- linux 服务器模拟nas 存储提供nfs 挂在逻辑卷 `cetiti111`
 
 ```
-需要挂载的磁盘
-/opt/oracle/oradata
-/opt/oracle/flash_recovery_area
-/opt/oracle/product/11.2.0/db_1/dbs
+# vi /etc/exports
+末尾添加：
+/opt/oracle/oradata *(rw,sync,no_wdelay,insecure_locks,no_root_squash)
+/opt/oracle/flash_recovery_area *(rw,sync,no_wdelay,insecure_locks,no_root_squash)
+/opt/oracle/product/11.2.0/db_1/dbs *(rw,sync,no_wdelay,insecure_locks,no_root_squash)
 
 ```
+- 重启NFS `cetiti111`
+
+```
+# service nfs restart
+```
+- 检查是否有挂载地
+
+```
+# showmount -e cetiti111查看是否设置成功
+```
+- 编辑/etc/fstab `cetiti113`
+
+```
+#vi /etc/fstab
+末尾添加：
+192.168.138.131:/opt/oracle/oradata /opt/oracle/oradata	nfs rw,nolock,bg,hard,nointr,tcp,vers=3,timeo=600,rsize=32768,wsize=32768,actimeo=0  0 0
+
+192.168.138.131:/opt/oracle/flash_recovery_area /opt/oracle/flash_recovery_area nfs rw,nolock,bg,hard,nointr,tcp,vers=3,timeo=600,rsize=32768,wsize=32768,actimeo=0  0 0
+
+192.168.138.131:/opt/oracle/product/11.2.0/db_1/dbs /opt/oracle/product/11.2.0/db_1/dbs nfs rw,nolock,bg,hard,nointr,tcp,vers=3,timeo=600,rsize=32768,wsize=32768,actimeo=0  0 0
+
+```
+- 重启服务 `cetiti113`
+
+```
+# reboot
+```
+- 查看是否挂载成功
+
+```
+# df -h
+```
+
 ## 4.安装数据库实例
 
 ```
@@ -888,3 +928,56 @@ NODELIST`cetiti111,cetiti113
 密码：123456
 高级：sysdba
 ```
+
+# 九、相关问题总结
+
+## 1.Oracle rac root.sh报错srvctl start nodeapps -n RAC01 fa
+ 
+
+```
+    参考：http://www.oracleplus.net/arch/151.html
+```    
+
+## 2. ohasd failed to start: Inappropriate ioctl for device
+
+
+```
+    参考：https://blog.csdn.net/rhys_oracle/article/details/41249295
+```
+
+## 3. grid节点没有cetiti-vip的解决方法
+
+
+```
+    # su – grid
+    # srvctl add vip -n cetiti113 -A cetiti113-vip/255.255.255.0/eth0
+    # srvctl start vip -n cetiti113
+    # srvctl status vip -n cetiti113
+```
+
+## 4. navicat等客户端连接集群报错oracle11g RAC scan ip连接时出现ORA-12545: 因目标主机或对象不存在
+
+```
+    参考：http://blog.itpub.net/24237320/viewspace-1060379/
+```
+
+## 5. 缺少cvuqdisk-1.0.7-1.rpm
+
+
+```
+    添加依赖包
+    smartmontools-5.43-3.el6.x86_64.rpm
+    cvuqdisk-1.0.7-1.rpm
+```    
+## 6. navicat连接失败，提示信息：TNS：连接关闭
+
+ - 修改文件权限:cetiti111、cetiti113均执行
+
+```
+   # chmod 6751  /opt/oracle/product/11.2.0.1/db/bin/oracle
+```   
+
+ - 重启集群服务器
+
+
+
